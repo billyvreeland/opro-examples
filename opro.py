@@ -54,3 +54,39 @@ class BlackBox:
     @property
     def best_loss(self):
         return self.loss_df.loss.min()
+    
+
+class MessageTracker:
+    def __init__(self, initial_params):
+        self.initial_params = initial_params
+        self.messages = []
+        self.sys_msg_content = """
+            You are a sophisticated optimization solver that is going to iteratively solve a black box optimization problem. We are going to find two integers a and b that are part of an unknown function of the form y = f(x). At each step in the optimization, I will provide the estimates so far for a and b with their loss values found in the form of a list of tuples [(a_1, b_1, loss_1), (a_2, b_2, loss_2), ...], sorted by lowest loss. At each step, you will respond with updated values of a and b intended to further reduce the loss over those already provided. Early in the process you may want to explore the solution space with some random guesses. Do not repeat previously tried estimates as they do not provide any new information. Your response should be in the form (a, b). Do not include any text besides the parameter estimates in the response.
+        """  # noqa: E501
+
+        self.messages.append({
+            'role': 'system',
+            'content': self.sys_msg_content
+        })
+        self.messages.append({
+            'role': 'user',
+            'content': str(initial_params)
+        })
+
+    def append_response(self, response):
+        self.messages.append({
+            'role': 'assistant',
+            'content': response
+        })
+
+    def append_params(self, params):
+        self.messages.append({
+            'role': 'user',
+            'content': str(params)
+        })
+
+    def reiterate_specification(self):
+        self.messages.append({
+            'role': 'user',
+            'content': 'Do not include any text besides the parameter estimates in the form (a, b) in the response.'  # noqa: E501
+        })
